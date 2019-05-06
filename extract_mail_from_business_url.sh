@@ -1,7 +1,11 @@
 #!/bin/bash
 
+#Total download time for a website; might not be enough for some websites
 TIMEOUT=40
+#Number of times to retry to download a website
 RETRIES=3
+
+#We need to know if we are running under linux or macos
 SYSTEM=$(uname -a)
 LINUX=$(echo ${SYSTEM} | grep -i linux | wc -l)
 MACOS=$(echo ${SYSTEM} | grep -i darwin | wc -l)
@@ -16,6 +20,7 @@ rm ${OUTPUT_FILE} 2>/dev/null
 
 N_OF_RECORDS=$(wc -l ${BUSINESS_LIST_FILE} | awk '{print $1}')
 
+#Only allow '.tsv' file format
 if [[ -z "${BUSINESS_LIST_FILE}" ]]; then
 	echo "ERROR: business list file cannot be empty"
 	exit 1

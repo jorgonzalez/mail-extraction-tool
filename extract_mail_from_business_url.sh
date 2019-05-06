@@ -1,7 +1,6 @@
 #!/bin/bash
 
 TIMEOUT=40
-TIMEOUT=80
 RETRIES=3
 SYSTEM=$(uname -a)
 LINUX=$(echo ${SYSTEM} | grep -i linux | wc -l)
@@ -12,7 +11,7 @@ FILTER_LIST_FILE="filter_list"
 FILTER_LIST=$(cat ${FILTER_LIST_FILE} | tr "\n" "|" | rev | cut -b 2- | rev)
 EXT=$(echo ${BUSINESS_LIST_FILE} | rev | cut -b -4 | rev)
 TMP_FILE="website_"${BUSINESS_LIST_FILE}
-OUTPUT_FILE=${BUSINESS_LIST_FILE}_WITH_MAILS
+OUTPUT_FILE=${BUSINESS_LIST_FILE}"_WITH_MAILS.tsv"
 rm ${OUTPUT_FILE} 2>/dev/null
 
 N_OF_RECORDS=$(wc -l ${BUSINESS_LIST_FILE} | awk '{print $1}')

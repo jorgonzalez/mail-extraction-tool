@@ -1,4 +1,25 @@
 #!/bin/bash
+#
+#	Author:		Jorge González
+#
+# 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
+#
+#	Version:	0.7
+#
+#	Modifications:	v0.1; first version.
+#			v0.2; Add MacOS support.
+#			v0.3; Scrap "text(at)text.domain" and "text (at) text.domain" mails.
+#			v0.4; Scrap "text[at]text[dot]domain" mails.
+#			v0.5; Add a filter list to remove unwanted words from emails.
+#			v0.6; Verify and only allow '.tvs' entry files.
+#			v0.7; Verify if FILTER_LIST_FILE file exists; add timeoutBin (timeout/gtimout) for Linux/MacOs.
+#
+#	Future imprv.:	Preview.
+#			Option to have the secondaries scenes on the right.
+#
+
+#Some variables
+version=0.7
 
 #Total download time for a website; might not be enough for some websites
 TIMEOUT=40

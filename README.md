@@ -22,5 +22,5 @@ Configurable options in the tool:
 * TIMEOUT: default `40` seconds; doesn't work in MacOS sinte `timeout` is not a standard command in `darwin`. If you want this option to work in MacOS, read https://gist.github.com/dasgoll/7b1a796d6e42cb66508bc504bb518f82
 * RETRIES: default `3` times; number of times the website will be tried to get downloaded. 
 * FILTER_LIST_FILE: default `filter_list`; name of the filter list of optional words to exclude from the emails addresses scrapped by the tool.
-* TMP_FILE: default `website_"${BUSINESS_LIST_FILE}`; temporary file where the website is downloaded and then deleted after being processed for email scrapping.
-* OUTPUT_FILE: default `${BUSINESS_LIST_FILE}_WITH_MAILS.tsv`; filename where the extration tool will output the results of the scrapping.
+* TMP_FILE: default `"website_"${BUSINESS_LIST_FILE}`; temporary file where the website is downloaded and then deleted after being processed for email scrapping.
+* OUTPUT_FILE: default `${BUSINESS_LIST_FILE}"_WITH_MAILS.tsv"`; filename where the extration tool will output the results of the scrapping.

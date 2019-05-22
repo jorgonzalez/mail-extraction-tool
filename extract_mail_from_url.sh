@@ -13,16 +13,17 @@
 #			v0.5; Add a filter list to remove unwanted words from emails.
 #			v0.6; Verify and only allow '.tvs' entry files.
 #			v0.7; Verify if FILTER_LIST_FILE file exists; add timeoutBin (timeout/gtimout) for Linux/MacOs.
+#			v0.8; Added support for CYGWIN.
 #
 #	Future imprv.:	Preview.
 #			Option to have the secondaries scenes on the right.
 #
 
 #Some variables
-version=0.7
+version=0.8
 
 #Total download time for a website; might not be enough for some websites
-TIMEOUT=40
+TIMEOUT=120
 #Number of times to retry to download a website
 RETRIES=3
 
@@ -30,6 +31,7 @@ RETRIES=3
 SYSTEM=$(uname -a)
 LINUX=$(echo ${SYSTEM} | grep -i linux | wc -l)
 MACOS=$(echo ${SYSTEM} | grep -i darwin | wc -l)
+CYGWIN=$(echo ${SYSTEM} | grep -i cygwin | wc -l)
 
 #The weblist entry file is ARG
 WEBSITE_LIST_FILE=${@}
@@ -74,7 +76,7 @@ while read LINE; do
 
 	if [[ ! -z "${URL}" && "$URL" != "http" ]]; then
 		rm ${TMP_FILE} 2>/dev/null
-		if [[ "${LINUX}" -eq 1 ]]; then
+		if [[ "${LINUX}" -eq 1 || "${CYGWIN}" -eq 1 ]]; then
 			timeoutBin=$(which timeout)
 			${timeoutBin} ${TIMEOUT} wget -t ${RETRIES} -r -l 2 -qO ${TMP_FILE} ${URL}
 			EMAIL_LIST_1=$(grep -ahrio "\b[a-z0-9.-]\+@[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | tr "\n" ", ")

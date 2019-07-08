@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.7
+#	Version:	0.9
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -14,13 +14,14 @@
 #			v0.6; Verify and only allow '.tvs' entry files.
 #			v0.7; Verify if FILTER_LIST_FILE file exists; add timeoutBin (timeout/gtimout) for Linux/MacOs.
 #			v0.8; Added support for CYGWIN.
+#			v0.9; Added UID.
 #
 #	Future imprv.:	Preview.
 #			Option to have the secondaries scenes on the right.
 #
 
 #Some variables
-version=0.8
+version=0.9
 
 #Total download time for a website; might not be enough for some websites
 TIMEOUT=120
@@ -68,8 +69,9 @@ while read LINE; do
 		echo "ERROR: entry list file must be in format of tabs separated values '.tvs' (extension)"
 		exit 1
 	elif [[ "${EXT}" == ".tsv" ]]; then
-		WEBSITE=$(echo "${LINE}" | awk -F"\t" '{print $1}' | tr -d "*\"")
-		URL=$(echo "${LINE}" | awk -F"\t" '{print $2}' | sed 's/\r//')
+		WEBUID=$(echo "${LINE}" | awk -F"\t" '{print $1}')
+		WEBSITE=$(echo "${LINE}" | awk -F"\t" '{print $2}' | tr -d "*\"")
+		URL=$(echo "${LINE}" | awk -F"\t" '{print $3}' | sed 's/\r//')
 	fi
 
 	echo "Processing record ${i}/${N_OF_RECORDS} (${WEBSITE})..."
@@ -94,7 +96,7 @@ while read LINE; do
 		EMAIL_LIST=$(echo ${EMAIL_LIST_1} ${EMAIL_LIST_2} ${EMAIL_LIST_3} ${EMAIL_LIST_4} | tr '[:upper:]' '[:lower:]' | tr -d " " | tr "," "\n" | sort -u | grep -Ev "${FILTER_LIST}" | tr "\n" "," | cut -b 2- | rev | cut -b 2- | rev)
 	fi
 
-	echo -e "${WEBSITE}\t${URL}\t${EMAIL_LIST}" >> ${OUTPUT_FILE}
+	echo -e "$(WEBUID)\t${WEBSITE}\t${URL}\t${EMAIL_LIST}" >> ${OUTPUT_FILE}
 	rm ${TMP_FILE} 2>/dev/null
 	let i=${i}+1
 done < ${WEBSITE_LIST_FILE}

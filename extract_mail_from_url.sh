@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.9
+#	Version:	0.10
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -15,13 +15,14 @@
 #			v0.7; Verify if FILTER_LIST_FILE file exists; add timeoutBin (timeout/gtimout) for Linux/MacOs.
 #			v0.8; Added support for CYGWIN.
 #			v0.9; Added UID.
+#			v0.10; Fixed wrong WEBUID output var; remove first line of input file if header.
 #
 #	Future imprv.:	Preview.
 #			Option to have the secondaries scenes on the right.
 #
 
 #Some variables
-version=0.9
+version=0.10
 
 #Total download time for a website; might not be enough for some websites
 TIMEOUT=120
@@ -63,6 +64,11 @@ elif [[ ! -f "${WEBSITE_LIST_FILE}" ]]; then
 	exit 1
 fi
 
+#Remove the first line of the input file if it's the header
+if [[ $(head -n 1 ${WEBSITE_LIST_FILE} | grep http | wc -l) -ne 1 ]]; then
+	sed '1d' ${WEBSITE_LIST_FILE} -i
+fi
+
 i=1
 while read LINE; do
 	if [[ "${EXT}" != ".tsv" ]]; then
@@ -96,7 +102,7 @@ while read LINE; do
 		EMAIL_LIST=$(echo ${EMAIL_LIST_1} ${EMAIL_LIST_2} ${EMAIL_LIST_3} ${EMAIL_LIST_4} | tr '[:upper:]' '[:lower:]' | tr -d " " | tr "," "\n" | sort -u | grep -Ev "${FILTER_LIST}" | tr "\n" "," | cut -b 2- | rev | cut -b 2- | rev)
 	fi
 
-	echo -e "$(WEBUID)\t${WEBSITE}\t${URL}\t${EMAIL_LIST}" >> ${OUTPUT_FILE}
+	echo -e "${WEBUID}\t${WEBSITE}\t${URL}\t${EMAIL_LIST}" >> ${OUTPUT_FILE}
 	rm ${TMP_FILE} 2>/dev/null
 	let i=${i}+1
 done < ${WEBSITE_LIST_FILE}

@@ -17,6 +17,12 @@ The tool downloads the website using `wget` and then searches for different emai
  * text (at) text.domain `[a-z0-9.-] (at) [a-z0-9.-].[a-z]`
  * text(at)text.domain `[a-z0-9.-](at)[a-z0-9.-].[a-z]`
  * text[at]text[dot]domain `[a-z0-9.-][at][a-z0-9.-][dot][a-z]`
+ * text[ät]text.domain `[a-z0-9.-][ät][a-z0-9.-].[a-z]`
+ * text [at] text.domain `[a-z0-9.-][at][a-z0-9.-].[a-z]`
+ * text [at] text [punkt] domain `[a-z0-9.-][at][a-z0-9.-][punkt][a-z]`
+ * text(at)text(dot)domain `[a-z0-9.-](at)[a-z0-9.-](dot)[a-z]`
+ * text at text.domain `[a-z0-9.-] at [a-z0-9.-].[a-z]`
+ * text [at] text [dot] domain `[a-z0-9.-] [at] [a-z0-9.-] [dot] [a-z]`
  
 Configurable options in the tool:
 * TIMEOUT: default `40` seconds; doesn't work in MacOS sinte `timeout` is not a standard command in `darwin`. If you want this option to work in MacOS, read https://gist.github.com/dasgoll/7b1a796d6e42cb66508bc504bb518f82

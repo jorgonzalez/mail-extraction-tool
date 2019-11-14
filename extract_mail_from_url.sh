@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.10
+#	Version:	0.12
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -16,16 +16,17 @@
 #			v0.8; Added support for CYGWIN.
 #			v0.9; Added UID.
 #			v0.10; Fixed wrong WEBUID output var; remove first line of input file if header.
+#			v0.11; Scrap "text[ät]text.domain", "text [at] text.domain", "text [at] text [punkt] domain", "text(at)text(dot)domain" and "text [at] text [dot] domain" mails.
+#			v0.12; Scrap whole domain and not only the given subdomain.
 #
-#	Future imprv.:	Preview.
-#			Option to have the secondaries scenes on the right.
+#	Future imprv.:	
 #
 
 #Some variables
-version=0.10
+version=0.12
 
 #Total download time for a website; might not be enough for some websites
-TIMEOUT=120
+TIMEOUT=180
 #Number of times to retry to download a website
 RETRIES=3
 
@@ -78,28 +79,62 @@ while read LINE; do
 		WEBUID=$(echo "${LINE}" | awk -F"\t" '{print $1}')
 		WEBSITE=$(echo "${LINE}" | awk -F"\t" '{print $2}' | tr -d "*\"")
 		URL=$(echo "${LINE}" | awk -F"\t" '{print $3}' | sed 's/\r//')
+		DOMAIN=$(expr match "${URL}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
 	fi
 
 	echo "Processing record ${i}/${N_OF_RECORDS} (${WEBSITE})..."
 
-	if [[ ! -z "${URL}" && "$URL" != "http" ]]; then
+	if [[ ! -z "${URL}" && "${URL}" != "http" ]]; then
 		rm ${TMP_FILE} 2>/dev/null
 		if [[ "${LINUX}" -eq 1 || "${CYGWIN}" -eq 1 ]]; then
 			timeoutBin=$(which timeout)
-			${timeoutBin} ${TIMEOUT} wget -t ${RETRIES} -r -l 2 -qO ${TMP_FILE} ${URL}
+			${timeoutBin} ${TIMEOUT} wget -t ${RETRIES} -rH -l 2 -D ${DOMAIN} -qO ${TMP_FILE} ${URL}
+			#text@text.domain
 			EMAIL_LIST_1=$(grep -ahrio "\b[a-z0-9.-]\+@[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | tr "\n" ", ")
+			#text (at) text.domain
 			EMAIL_LIST_2=$(grep -ahrio "\b[a-z0-9.-]*\s(at)*\s[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ (at) /@/g' | sort -u | tr "\n" ", ")
+			#text(at)text.domain
 			EMAIL_LIST_3=$(grep -ahrio "\b[a-z0-9.-]\+(at)[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/(at)/@/g' | sort -u | tr "\n" ", ")
+			#text[at]text[dot]domain
 			EMAIL_LIST_4=$(grep -ahrio "\b[a-z0-9.-]\+\[at\][a-z0-9.-]\+\[dot\][a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/\[at\]/@/g' | sed 's/\[dot\]/./' | sort -u | tr "\n" ", ")
+			#text[ät]text.domain
+			EMAIL_LIST_5=$(grep -ahrio "\b[a-z0-9.-]\+\[ät\][a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/\[ät\]/@/g' | sort -u | tr "\n" ", ")
+			#text [at] text.domain
+			EMAIL_LIST_6=$(grep -ahrio "\b[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sort -u | tr "\n" ", ")
+			#text [at] text [punkt] domain
+			EMAIL_LIST_7=$(grep -ahrio "\b[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]*\s\[punkt\]*\s[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sed 's/ \[punkt\] /./' | sort -u | tr "\n" ", ")
+			#text(at)text(dot)domain
+			EMAIL_LIST_8=$(grep -ahrio "\b[a-z0-9.-]\+(at)[a-z0-9.-]\+(dot)[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/(at)/@/g' | sed 's/(dot)/./' | sort -u | tr "\n" ", ")
+			#text at text.domain
+			EMAIL_LIST_9=$(grep -ahrio "\b[a-z0-9.-]*\sat*\s[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ at /@/g' | sort -u | tr "\n" ", ")
+			#text [at] text [dot] domain
+			EMAIL_LIST_10=$(grep -ahrio "\b[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]*\s\[dot\]*\s[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sed 's/ \[dot\] /./' | sort -u | tr "\n" ", ")
 		elif [[ "${MACOS}" -eq 1 ]]; then
 			timeoutBin=$(which gtimeout)
-			${timeoutBin} wget -r -l 2 -qO -T ${TIMEOUT} -t ${RETRIES} ${TMP_FILE} ${URL}
+			${timeoutBin} wget -rH -l 2 -qO -T ${TIMEOUT} -t ${RETRIES} -D ${DOMAIN} ${TMP_FILE} ${URL}
+			#text@text.domain
 			EMAIL_LIST_1=$(grep -ahrio "[a-z0-9.-]\+@[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | tr "\n" ", ")
+			#text (at) text.domain
 			EMAIL_LIST_2=$(grep -ahrio "[a-z0-9.-]*\s(at)*\s[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | sed 's/ (at) /@/g' | sort -u | tr "\n" ", ")
+			#text(at)text.domain
 			EMAIL_LIST_3=$(grep -ahrio "[a-z0-9.-]\+(at)[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | sed 's/(at)/@/g' | sort -u | tr "\n" ", ")
+			#text[at]text[dot]domain
 			EMAIL_LIST_4=$(grep -ahrio "[a-z0-9.-]\+\[at\][a-z0-9.-]\+\[dot\][a-z]\{2,4\}" ${TMP_FILE} | sed 's/\[at\]/@/g' | sed 's/\[dot\]/./' | sort -u | tr "\n" ", ")
+			#text[ät]text.domain
+			EMAIL_LIST_5=$(grep -ahrio "[a-z0-9.-]\+\[ät\][a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | sed 's/\[ät\]/@/g' | sort -u | tr "\n" ", ")
+			#text [at] text.domain
+			EMAIL_LIST_6=$(grep -ahrio "[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sort -u | tr "\n" ", ")
+			#text [at] text [punkt] domain
+			EMAIL_LIST_7=$(grep -ahrio "[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]*\s\[punkt\]*\s[a-z]\{2,4\}" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sed 's/ \[punkt\] /./' | sort -u | tr "\n" ", ")
+			#text(at)text(dot)domain
+			EMAIL_LIST_8=$(grep -ahrio "[a-z0-9.-]\+(at)[a-z0-9.-]\+(dot)[a-z]\{2,4\}" ${TMP_FILE} | sed 's/(at)/@/g' | sed 's/(dot)/./' | sort -u | tr "\n" ", ")
+			#text at text.domain
+			EMAIL_LIST_9=$(grep -ahrio "[a-z0-9.-]*\sat*\s[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | sed 's/ at /@/g' | sort -u | tr "\n" ", ")
+			#text [at] text [dot] domain
+			EMAIL_LIST_10=$(grep -ahrio "[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]*\s\[dot\]*\s[a-z]\{2,4\}" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sed 's/ \[dot\] /./' | sort -u | tr "\n" ", ")
 		fi
-		EMAIL_LIST=$(echo ${EMAIL_LIST_1} ${EMAIL_LIST_2} ${EMAIL_LIST_3} ${EMAIL_LIST_4} | tr '[:upper:]' '[:lower:]' | tr -d " " | tr "," "\n" | sort -u | grep -Ev "${FILTER_LIST}" | tr "\n" "," | cut -b 2- | rev | cut -b 2- | rev)
+		EMAIL_LIST=$(echo ${EMAIL_LIST_1} ${EMAIL_LIST_2} ${EMAIL_LIST_3} ${EMAIL_LIST_4} ${EMAIL_LIST_5} ${EMAIL_LIST_6} ${EMAIL_LIST_7} ${EMAIL_LIST_8} ${EMAIL_LIST_9} ${EMAIL_LIST_10} \
+		| tr '[:upper:]' '[:lower:]' | tr -d " " | tr "," "\n" | sort -u | grep -Ev "${FILTER_LIST}" | tr "\n" "," | cut -b 2- | rev | cut -b 2- | rev)
 	fi
 
 	echo -e "${WEBUID}\t${WEBSITE}\t${URL}\t${EMAIL_LIST}" >> ${OUTPUT_FILE}

@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.14
+#	Version:	0.15
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -20,15 +20,18 @@
 #			v0.12; Scrap whole domain and not only the given subdomain.
 #			v0.13; Crawl websites that have been redirected (301).
 #			v0.14; Fix website processing when URL is non ASCII.
+#			v0.15; Add TIMEOUT as an ENV VAR.
 #
-#	Future imprv.:	Add TIMEOUT as a parameter.
+#	Future imprv.:
 #
 
 #Some variables
 version=0.14
 
 #Total download time for a website; might not be enough for some websites
-TIMEOUT=180
+if [[ -z ${TIMEOUT} ]]; then
+	TIMEOUT=180
+fi
 #Number of times to retry to download a website
 RETRIES=3
 

@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.13
+#	Version:	0.14
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -19,13 +19,13 @@
 #			v0.11; Scrap "text[ät]text.domain", "text [at] text.domain", "text [at] text [punkt] domain", "text(at)text(dot)domain" and "text [at] text [dot] domain" mails.
 #			v0.12; Scrap whole domain and not only the given subdomain.
 #			v0.13; Crawl websites that have been redirected (301).
+#			v0.14; Fix website processing when URL is non ASCII.
 #
 #	Future imprv.:	Add TIMEOUT as a parameter.
-#			Fix website processing when URL is non ASCII.
 #
 
 #Some variables
-version=0.13
+version=0.14
 
 #Total download time for a website; might not be enough for some websites
 TIMEOUT=180
@@ -67,6 +67,12 @@ elif [[ ! -f "${WEBSITE_LIST_FILE}" ]]; then
 	exit 1
 fi
 
+function check_domain {
+	DOMAIN=${1}
+	DOMAIN_CHECK=$(echo ${DOMAIN} | grep -E ".business.|.eatbu.|.jimdo.|.webnode.|.tumblr.|.google.|.blogspot.|.wixsite.|.metro.|.wordpress." | wc -l)
+}
+
+
 #Remove the first line of the input file if it's the header
 if [[ $(head -n 1 ${WEBSITE_LIST_FILE} | grep http | wc -l) -ne 1 ]]; then
 	sed '1d' ${WEBSITE_LIST_FILE} -i
@@ -81,7 +87,16 @@ while read LINE; do
 		WEBUID=$(echo "${LINE}" | awk -F"\t" '{print $1}')
 		WEBSITE=$(echo "${LINE}" | awk -F"\t" '{print $2}' | tr -d "*\"")
 		URL=$(echo "${LINE}" | awk -F"\t" '{print $3}' | sed 's/\r//')
-		DOMAIN=$(expr match "${URL}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
+		DOMAIN=$(echo ${URL} | sed -E -e 's_.*://([^/@]*@)?([^/:]+).*_\2_')
+		check_domain ${DOMAIN}
+		if [[ ${DOMAIN_CHECK} -eq 0 ]]; then
+			DOMAIN_FIX=$(expr match "${DOMAIN}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
+			if [[ -z ${DOMAIN_FIX} ]]; then
+				DOMAIN=$(expr match ${DOMAIN} '\(.*\..*\)')
+			else
+				DOMAIN=${DOMAIN_FIX}
+			fi
+		fi
 	fi
 
 	echo "Processing record ${i}/${N_OF_RECORDS} (${WEBSITE})..."
@@ -162,3 +177,8 @@ done < ${WEBSITE_LIST_FILE}
 
 echo -e "\n================================================================================"
 echo -e "DONE!"
+
+
+#business.site
+#wordpress.com
+#www.facebook.com

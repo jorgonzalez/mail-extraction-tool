@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.12
+#	Version:	0.13
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -18,12 +18,14 @@
 #			v0.10; Fixed wrong WEBUID output var; remove first line of input file if header.
 #			v0.11; Scrap "text[ät]text.domain", "text [at] text.domain", "text [at] text [punkt] domain", "text(at)text(dot)domain" and "text [at] text [dot] domain" mails.
 #			v0.12; Scrap whole domain and not only the given subdomain.
+#			v0.13; Crawl websites that have been redirected (301).
 #
-#	Future imprv.:	
+#	Future imprv.:	Add TIMEOUT as a parameter.
+#			Fix website processing when URL is non ASCII.
 #
 
 #Some variables
-version=0.12
+version=0.13
 
 #Total download time for a website; might not be enough for some websites
 TIMEOUT=180
@@ -88,6 +90,14 @@ while read LINE; do
 		rm ${TMP_FILE} 2>/dev/null
 		if [[ "${LINUX}" -eq 1 || "${CYGWIN}" -eq 1 ]]; then
 			timeoutBin=$(which timeout)
+			URL_HEADERS=$(wget -q -S -O - ${DOMAIN} 2>&1 | head -n 30)
+			if [[ $(echo "${URL_HEADERS}" | grep "Moved Permanently" | wc -l) -eq 1 ]]; then
+				NEW_DOMAIN=$(echo "${URL_HEADERS}" | grep "Location: " | awk '{print $2}' | tail -n 1)
+				NEW_DOMAIN=$(expr match "${NEW_DOMAIN}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
+				URL=$(echo ${URL} | sed 's/'${DOMAIN}'/'${NEW_DOMAIN}'/')
+				DOMAIN=${NEW_DOMAIN}
+			fi
+
 			${timeoutBin} ${TIMEOUT} wget -t ${RETRIES} -rH -l 2 -D ${DOMAIN} -qO ${TMP_FILE} ${URL}
 			#text@text.domain
 			EMAIL_LIST_1=$(grep -ahrio "\b[a-z0-9.-]\+@[a-z0-9.-]\+\.[a-z]\{2,4\}\+\b" ${TMP_FILE} | tr "\n" ", ")
@@ -111,6 +121,14 @@ while read LINE; do
 			EMAIL_LIST_10=$(grep -ahrio "\b[a-z0-9.-]*\s\[at\]*\s[a-z0-9.-]*\s\[dot\]*\s[a-z]\{2,4\}\+\b" ${TMP_FILE} | sed 's/ \[at\] /@/g' | sed 's/ \[dot\] /./' | sort -u | tr "\n" ", ")
 		elif [[ "${MACOS}" -eq 1 ]]; then
 			timeoutBin=$(which gtimeout)
+			URL_HEADERS=$(wget -q -S -O - ${DOMAIN} 2>&1 | head -n 30)
+			if [[ $(echo "${URL_HEADERS}" | grep "Moved Permanently" | wc -l) -eq 1 ]]; then
+				NEW_DOMAIN=$(echo "${URL_HEADERS}" | grep "Location: " | awk '{print $2}' | tail -n 1)
+				NEW_DOMAIN=$(expr match "${NEW_DOMAIN}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
+				URL=$(echo ${URL} | sed 's/'${DOMAIN}'/'${NEW_DOMAIN}'/')
+				DOMAIN=${NEW_DOMAIN}
+			fi
+
 			${timeoutBin} wget -rH -l 2 -qO -T ${TIMEOUT} -t ${RETRIES} -D ${DOMAIN} ${TMP_FILE} ${URL}
 			#text@text.domain
 			EMAIL_LIST_1=$(grep -ahrio "[a-z0-9.-]\+@[a-z0-9.-]\+\.[a-z]\{2,4\}" ${TMP_FILE} | tr "\n" ", ")

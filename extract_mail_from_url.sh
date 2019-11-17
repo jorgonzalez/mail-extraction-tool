@@ -4,7 +4,7 @@
 #
 # 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
 #
-#	Version:	0.15
+#	Version:	0.16
 #
 #	Modifications:	v0.1; first version.
 #			v0.2; Add MacOS support.
@@ -21,12 +21,13 @@
 #			v0.13; Crawl websites that have been redirected (301).
 #			v0.14; Fix website processing when URL is non ASCII.
 #			v0.15; Add TIMEOUT as an ENV VAR.
+#			v0.16; Avoid downloading home file (e.g.: index.html) when asking for headers.
 #
 #	Future imprv.:
 #
 
 #Some variables
-version=0.14
+version=0.16
 
 #Total download time for a website; might not be enough for some websites
 if [[ -z ${TIMEOUT} ]]; then
@@ -70,6 +71,7 @@ elif [[ ! -f "${WEBSITE_LIST_FILE}" ]]; then
 	exit 1
 fi
 
+#Function to check if the domain is owned or is a subdomain of a known web service.
 function check_domain {
 	DOMAIN=${1}
 	DOMAIN_CHECK=$(echo ${DOMAIN} | grep -E ".business.|.eatbu.|.jimdo.|.webnode.|.tumblr.|.google.|.blogspot.|.wixsite.|.metro.|.wordpress." | wc -l)
@@ -108,12 +110,19 @@ while read LINE; do
 		rm ${TMP_FILE} 2>/dev/null
 		if [[ "${LINUX}" -eq 1 || "${CYGWIN}" -eq 1 ]]; then
 			timeoutBin=$(which timeout)
-			URL_HEADERS=$(wget -q -S -O - ${DOMAIN} 2>&1 | head -n 30)
+			#Check if the URL is the proper source: websites can be moved to another main domain (e.g. berghain.berlin -> berghain.de)
+			URL_HEADERS=$(wget -q -S -O - ${URL} 2>&1 1>/dev/null)
 			if [[ $(echo "${URL_HEADERS}" | grep "Moved Permanently" | wc -l) -eq 1 ]]; then
-				NEW_DOMAIN=$(echo "${URL_HEADERS}" | grep "Location: " | awk '{print $2}' | tail -n 1)
-				NEW_DOMAIN=$(expr match "${NEW_DOMAIN}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
-				URL=$(echo ${URL} | sed 's/'${DOMAIN}'/'${NEW_DOMAIN}'/')
-				DOMAIN=${NEW_DOMAIN}
+				NEW_DOMAIN=$(echo "${URL_HEADERS}" | grep -i "location: http" | awk '{print $2}' | tail -n 1)
+				check_domain ${NEW_DOMAIN}
+				if [[ ${DOMAIN_CHECK} -eq 0 ]]; then
+					DOMAIN_FIX=$(expr match "${NEW_DOMAIN}" '.*\.\(.*\..*\)' | awk -F"/" '{print $1}')
+					if [[ -z ${DOMAIN_FIX} ]]; then
+						DOMAIN=$(expr match ${NEW_DOMAIN} '\(.*\..*\)')
+					else
+						DOMAIN=${DOMAIN_FIX}
+					fi
+				fi
 			fi
 
 			${timeoutBin} ${TIMEOUT} wget -t ${RETRIES} -rH -l 2 -D ${DOMAIN} -qO ${TMP_FILE} ${URL}
@@ -180,8 +189,3 @@ done < ${WEBSITE_LIST_FILE}
 
 echo -e "\n================================================================================"
 echo -e "DONE!"
-
-
-#business.site
-#wordpress.com
-#www.facebook.com

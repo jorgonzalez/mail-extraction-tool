@@ -1,6 +1,6 @@
 # mail-extration-tool
 
-Tool to scrap emails from a list of websites. Takes the list of websites as a parameter, in format TBS (tab separated values) e.g.:
+Tool to scrap emails from a list of websites. Takes the list of websites as a parameter, in format TSV (tab separated values) e.g.:
 
 WEBUID&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WEBSITE&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;URL
 

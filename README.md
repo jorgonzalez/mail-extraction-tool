@@ -1,4 +1,4 @@
-# mail-extration-tool
+# mail-extraction-tool
 
 Tool to scrap emails from a list of websites. Takes the list of websites as a parameter, in format TSV (tab separated values) e.g.:
 

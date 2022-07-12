@@ -2,7 +2,7 @@
 #
 #	Author:		Jorge González
 #
-# 	Description:	Script to scrap emails from URLs given an ARG list in TVS format.
+# 	Description:	Script to scrap emails from URLs given an ARG list in TSV format.
 #
 #	Version:	0.16
 #
@@ -11,7 +11,7 @@
 #			v0.3; Scrap "text(at)text.domain" and "text (at) text.domain" mails.
 #			v0.4; Scrap "text[at]text[dot]domain" mails.
 #			v0.5; Add a filter list to remove unwanted words from emails.
-#			v0.6; Verify and only allow '.tvs' entry files.
+#			v0.6; Verify and only allow '.tsv' entry files.
 #			v0.7; Verify if FILTER_LIST_FILE file exists; add timeoutBin (timeout/gtimout) for Linux/MacOs.
 #			v0.8; Added support for CYGWIN.
 #			v0.9; Added UID.
@@ -53,7 +53,7 @@ else
 	FILTER_LIST=NULL
 fi
 
-#Get the extension of the file, we only work with '.tvs'
+#Get the extension of the file, we only work with '.tsv'
 EXT=$(echo ${WEBSITE_LIST_FILE} | rev | cut -b -4 | rev)
 TMP_FILE="website_"${WEBSITE_LIST_FILE}
 OUTPUT_FILE=${WEBSITE_LIST_FILE}"_WITH_MAILS.tsv"
@@ -86,7 +86,7 @@ fi
 i=1
 while read LINE; do
 	if [[ "${EXT}" != ".tsv" ]]; then
-		echo "ERROR: entry list file must be in format of tabs separated values '.tvs' (extension)"
+		echo "ERROR: entry list file must be in format of tabs separated values '.tsv' (extension)"
 		exit 1
 	elif [[ "${EXT}" == ".tsv" ]]; then
 		WEBUID=$(echo "${LINE}" | awk -F"\t" '{print $1}')
